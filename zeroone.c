@@ -5,62 +5,48 @@
 
 #include "vroot.h"
 
+int main() {
+	Display *dpy;
+	Window root;
+	XWindowAttributes winAttributes;
+	GC g;
 
-int main ()
-{
-  Display *dpy;
-  Window root;
-  XWindowAttributes wa;
-  GC g;
+	XColor redx, reds;
 
-  XColor redx, reds;
+	/* open the display (connect to the X server) */
+	dpy = XOpenDisplay(getenv("DISPLAY"));
 
+	/* get the root window */
+	root = DefaultRootWindow(dpy);
 
-  /* open the display (connect to the X server) */
-  dpy = XOpenDisplay (getenv ("DISPLAY"));
+	/* get attributes of the root window */
+	XGetWindowAttributes(dpy, root, &winAttributes);
 
+	/* create a GC for drawing in the window */
+	g = XCreateGC(dpy, root, 0, NULL);
 
-  /* get the root window */
-  root = DefaultRootWindow (dpy);
+	/* allocate the red color */
+	XAllocNamedColor(dpy, DefaultColormapOfScreen(DefaultScreenOfDisplay(dpy)),
+			"red", &reds, &redx);
 
+	/* set foreground color */
+	XSetForeground(dpy, g, reds.pixel);
 
-  /* get attributes of the root window */
-  XGetWindowAttributes(dpy, root, &wa);
+	/* draw something */
+	while (1) {
+		/* draw a string */
+		XDrawString(dpy, root, g, random() % wa.width, random() % winAttributes.height,
+				"Ooops!", strlen("Ooops!"));
 
+		/* once in a while, clear all */
+		if (random() % 500 < 1)
+			XClearWindow(dpy, root);
 
-  /* create a GC for drawing in the window */
-  g = XCreateGC (dpy, root, 0, NULL);
+		/* flush changes and sleep */
+		XFlush(dpy);
+		usleep(10);
+	}
 
-
-  /* allocate the red color */
-  XAllocNamedColor(dpy,
-                     DefaultColormapOfScreen(DefaultScreenOfDisplay(dpy)),
-                     "red",
-                     &reds, &redx);
-
-
-  /* set foreground color */
-  XSetForeground(dpy, g, reds.pixel);
-
-
-  /* draw something */
-  while (1) {
-      /* draw a string */
-      XDrawString(dpy, root, g, random()%wa.width, random()%wa.height,
-                  "Ooops!", strlen("Ooops!") );
-
-
-      /* once in a while, clear all */
-      if( random()%500<1 )
-        XClearWindow(dpy, root);
-
-
-      /* flush changes and sleep */
-      XFlush(dpy);
-      usleep (10);
-  }
-
-
-  XCloseDisplay (dpy);
-  return EXIT_SUCCESS;
+	XCloseDisplay(dpy);
+	return EXIT_SUCCESS;
 }
