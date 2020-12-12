@@ -1,0 +1,15 @@
+
+TARGET=zeroone
+INSTALLED_TARGET=$(HOME)/bin/$(TARGET)
+
+all: $(INSTALLED_TARGET)
+
+
+$(INSTALLED_TARGET): $(TARGET)
+	cp $(TARGET) $(INSTALLED_TARGET)
+
+$(TARGET): $(TARGET).o
+	$(CC) -o $(TARGET) $(TARGET).o -lX11
+
+clean:
+	rm -rf $(TARGET) *.o
