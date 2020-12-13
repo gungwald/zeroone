@@ -5,42 +5,59 @@
 
 #include "vroot.h"
 
-int main() {
+int main(int argc, char *argv[]) {
 	Display *dpy;
-	Window root;
+	Window w;
 	XWindowAttributes winAttributes;
-	GC g;
-
+	GC graphicsContext;
+	Font sonyFont;
 	XColor redx, reds;
+	long startX, startY;
+	XEvent e;
 
 	/* open the display (connect to the X server) */
 	dpy = XOpenDisplay(getenv("DISPLAY"));
 
-	/* get the root window */
-	root = DefaultRootWindow(dpy);
+	if (argc > 1 && strcmp(argv[1], "-root")) {
+		w = DefaultRootWindow(dpy);
+	} else {
+		/* create, name, and map window */
+		w = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 200, 200, 400, 400,
+				1, BlackPixel(dpy, DefaultScreen (dpy)),
+				WhitePixel(dpy, DefaultScreen (dpy)));
+		XStoreName(dpy, w, "ZeroOne");
+		XSelectInput(dpy, w, StructureNotifyMask);
+		XMapRaised(dpy, w);
+		do {
+			XWindowEvent(dpy, w, StructureNotifyMask, &e);
+		} while (e.type != MapNotify);
+	}
 
 	/* get attributes of the root window */
-	XGetWindowAttributes(dpy, root, &winAttributes);
+	XGetWindowAttributes(dpy, w, &winAttributes);
 
 	/* create a GC for drawing in the window */
-	g = XCreateGC(dpy, root, 0, NULL);
+	graphicsContext = XCreateGC(dpy, w, 0, NULL);
+
+	sonyFont = XLoadFont(dpy, "-sony-*-*-*-*-*-*-*-*-*-*-*-*-*");
+	XSetFont(dpy, graphicsContext, sonyFont);
 
 	/* allocate the red color */
 	XAllocNamedColor(dpy, DefaultColormapOfScreen(DefaultScreenOfDisplay(dpy)),
 			"red", &reds, &redx);
 
 	/* set foreground color */
-	XSetForeground(dpy, g, reds.pixel);
+	XSetForeground(dpy, graphicsContext, reds.pixel);
 
 	/* draw something */
 	while (1) {
 		/* draw a string */
-		XDrawString(dpy, root, g, random() % wa.width, random() % winAttributes.height,
-				"Ooops!", strlen("Ooops!"));
+		XDrawString(dpy, w, graphicsContext, random() % winAttributes.width,
+				random() % winAttributes.height, "Ooops!", strlen("Ooops!"));
 
 		/* once in a while, clear all */
 		if (random() % 500 < 1)
-			XClearWindow(dpy, root);
+			XClearWindow(dpy, w);
 
 		/* flush changes and sleep */
 		XFlush(dpy);
