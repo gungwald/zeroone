@@ -1,11 +1,11 @@
-
+CC=gcc
 TARGET=zeroone
 INSTALLED_TARGET=$(HOME)/bin/$(TARGET)
 
-all: $(INSTALLED_TARGET)
+all: $(TARGET)
 
 
-$(INSTALLED_TARGET): $(TARGET)
+install: $(TARGET)
 	cp $(TARGET) $(INSTALLED_TARGET)
 
 $(TARGET): $(TARGET).o
