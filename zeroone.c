@@ -6,26 +6,30 @@
 
 #include "vroot.h"
 
+long int delta();
+
 int main(int argc, char *argv[]) {
 	Display *dpy;
-	Window win;
+	Window root, win;
 	XWindowAttributes winAttributes;
 	GC graphicsContext;
 	Font sonyFont;
 	XColor redx, reds;
 	long startX, startY, x, y;
 	XEvent e;
+	long blackPixel, whitePixel;
 
-	/* open the display (connect to the X server) */
 	dpy = XOpenDisplay(getenv("DISPLAY"));
+	root = DefaultRootWindow(dpy);
+	blackPixel = BlackPixel(dpy, DefaultScreen (dpy));
+	whitePixel = WhitePixel(dpy, DefaultScreen (dpy));
 
 	if (argc > 1 && strcmp(argv[1], "-root")) {
-		win = DefaultRootWindow(dpy);
+		win = root;
 	} else {
 		/* create, name, and map window */
-		win = XCreateSimpleWindow(dpy, DefaultRootWindow(dpy), 200, 200, 400, 400,
-				1, BlackPixel(dpy, DefaultScreen (dpy)),
-				WhitePixel(dpy, DefaultScreen (dpy)));
+		win = XCreateSimpleWindow(dpy, root, 200, 200, 400, 400, 1, 
+				whitePixel, blackPixel);
 		XStoreName(dpy, win, "ZeroOne");
 		XSelectInput(dpy, win, StructureNotifyMask);
 		XMapRaised(dpy, win);
@@ -54,12 +58,14 @@ int main(int argc, char *argv[]) {
 	y = random() % winAttributes.height;
 
 	while (1) {
-		printf("x=%d y=%d\n", x, y);
-		XDrawString(dpy, win, graphicsContext, x, y, "0", 1);
-		x += 10;
-		y += 10;
+		printf("x=%ld y=%ld\n", x, y);
+		XDrawString(dpy, win, graphicsContext, x, y, " ", 1);
+		char digit = random() % 2 + '0';
+		XDrawString(dpy, win, graphicsContext, x, y, &digit, 1);
+		x += delta();
+		y += delta();
 
-		if (x >= winAttributes.width || y >= winAttributes.height) {
+		if (x < 0 || y < 0 || x >= winAttributes.width || y >= winAttributes.height) {
 			puts("clear");
 			XClearWindow(dpy, win);
 			x = random() % winAttributes.width;
@@ -68,9 +74,29 @@ int main(int argc, char *argv[]) {
 
 		/* flush changes and sleep */
 		XFlush(dpy);
-		usleep(1000);
+		usleep(1000000);
 	}
 
 	XCloseDisplay(dpy);
 	return EXIT_SUCCESS;
+}
+
+long int delta()
+{
+	long change = random() % 3;
+	switch(change) {
+	case 0:
+		change = -15;
+		break;
+	case 1:
+		change = 0;
+		break;
+	case 2:
+		change = 15;
+		break;
+	default:
+		change = 0;
+		break;
+	}
+	return change;
 }
