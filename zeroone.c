@@ -6,9 +6,12 @@
 
 #include "vroot.h"
 
+static const long int MICROSECONDS_PER_SECOND = 1000000;
+
 static char *describeDisplay(char *display);
 static long int delta();
-static Window getWindow(Display *display, int screenNumber, Window root, int argc, char *argv[]);
+static Window getWindow(Display *display, int screenNum, Window root, int argc, char *argv[]);
+static int getCharCellWidth(Display *display, GC graphicsContext);
 
 int main(int argc, char *argv[]) {
 	Display *display;
@@ -22,6 +25,7 @@ int main(int argc, char *argv[]) {
 	char *displayEnv;
 	int screenNumber;
 	Screen *screen;
+	int charCellWidth;
 
 	displayEnv = getenv("DISPLAY");
 	display = XOpenDisplay(displayEnv);
@@ -41,6 +45,8 @@ int main(int argc, char *argv[]) {
 	XSetFont(display, graphicsContext, sonyFont);
 	XAllocNamedColor(display, DefaultColormapOfScreen(screen), "red", &reds, &redx);
 	XSetForeground(display, graphicsContext, reds.pixel);
+
+	charCellWidth = getCharCellWidth(display, graphicsContext);
 
 	x = random() % winAttributes.width;
 	y = random() % winAttributes.height;
@@ -62,7 +68,7 @@ int main(int argc, char *argv[]) {
 			y = random() % winAttributes.height;
 		}
 		XFlush(display);
-		usleep(1000000);
+		usleep(MICROSECONDS_PER_SECOND);
 	}
 	XCloseDisplay(display);
 	return EXIT_SUCCESS;
@@ -114,3 +120,15 @@ Window getWindow(Display *display, int screenNumber, Window root, int argc, char
 		} while (event.type != MapNotify);
 	}
 }
+
+int getCharCellWidth(Display *display, GC graphicsContext)
+{
+	XGCValues gcValues;
+	XFontStruct *fontStruct;
+	int cellWidth;
+
+	XGetGCValues(display, graphicsContext, GCFont, &gcValues);
+	fontStruct = XQueryFont(display, gcValues.font);
+	return XTextWidth(fontStruct, "A", 1);
+}
+
