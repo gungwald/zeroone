@@ -11,7 +11,13 @@ static const long int MICROSECONDS_PER_SECOND = 1000000;
 static char *describeDisplay(char *display);
 static long int delta();
 static Window getWindow(Display *display, int screenNum, Window root, int argc, char *argv[]);
-static int getCharCellWidth(Display *display, GC graphicsContext);
+static struct Rectangle getCharCell(Display *display, GC graphicsContext);
+
+struct Rectangle
+{
+	int width;
+	int height;
+};
 
 int main(int argc, char *argv[]) {
 	Display *display;
@@ -25,7 +31,7 @@ int main(int argc, char *argv[]) {
 	char *displayEnv;
 	int screenNumber;
 	Screen *screen;
-	int charCellWidth;
+	struct Rectangle charCell;
 
 	displayEnv = getenv("DISPLAY");
 	display = XOpenDisplay(displayEnv);
@@ -46,7 +52,7 @@ int main(int argc, char *argv[]) {
 	XAllocNamedColor(display, DefaultColormapOfScreen(screen), "red", &reds, &redx);
 	XSetForeground(display, graphicsContext, reds.pixel);
 
-	charCellWidth = getCharCellWidth(display, graphicsContext);
+	charCell = getCharCell(display, graphicsContext);
 
 	x = random() % winAttributes.width;
 	y = random() % winAttributes.height;
@@ -121,14 +127,16 @@ Window getWindow(Display *display, int screenNumber, Window root, int argc, char
 	}
 }
 
-int getCharCellWidth(Display *display, GC graphicsContext)
+struct Rectangle getCharCell(Display *display, GC graphicsContext)
 {
 	XGCValues gcValues;
 	XFontStruct *fontStruct;
-	int cellWidth;
+	struct Rectangle cell;
 
 	XGetGCValues(display, graphicsContext, GCFont, &gcValues);
 	fontStruct = XQueryFont(display, gcValues.font);
-	return XTextWidth(fontStruct, "A", 1);
+	cell.width = XTextWidth(fontStruct, "A", 1);
+	cell.height = fontStruct->ascent + fontStruct->descent;
+	return cell;
 }
 
