@@ -125,6 +125,7 @@ Window getWindow(Display *display, int screenNumber, Window root, int argc, char
 			XWindowEvent(display, win, StructureNotifyMask, &event);
 		} while (event.type != MapNotify);
 	}
+	return win;
 }
 
 struct Rectangle getCharCell(Display *display, GC graphicsContext)
